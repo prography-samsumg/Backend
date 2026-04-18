@@ -1,0 +1,14 @@
+.git
+.gradle
+.idea
+.kotlin
+.omc
+.omx
+.claude
+build
+out
+*.iml
+Dockerfile.healthcheck-verify
+README.md
+HELP.md
+docs
