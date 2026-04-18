@@ -8,6 +8,10 @@ permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: cd-main
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-24.04
@@ -40,12 +44,12 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/flatmusic/fermata-be:latest
-            ghcr.io/flatmusic/fermata-be:${{ github.sha }}
+            ghcr.io/prography-samsumg/Backend:latest
+            ghcr.io/prography-samsumg/Backend:${{ github.sha }}
 
       - name: Deploy to EC2 via SSM
         env:
-          IMAGE_NAME: ghcr.io/flatmusic/fermata-be
+          IMAGE_NAME: ghcr.io/prography-samsumg/Backend
           IMAGE_TAG: ${{ github.sha }}
           SPRING_PROFILES_ACTIVE: prod
           GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
@@ -57,13 +61,13 @@ jobs:
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids "$EC2_INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
-            --comment "Deploy Fermata" \
+            --comment "Deploy Prography" \
             --parameters commands="[
-              \"IMAGE_NAME=$IMAGE_NAME IMAGE_TAG=$IMAGE_TAG ENV_FILE=/home/ubuntu/fermata/.env COMPOSE_FILE=/home/ubuntu/fermata/docker-compose.yml SPRING_PROFILES_ACTIVE=$SPRING_PROFILES_ACTIVE GHCR_USERNAME=$GHCR_USERNAME GHCR_TOKEN=$GHCR_TOKEN HEALTHCHECK_URL=http://localhost:8080/api/fermata/health /home/ubuntu/fermata/scripts/deploy.sh\"
+              \"IMAGE_NAME=$IMAGE_NAME IMAGE_TAG=$IMAGE_TAG ENV_FILE=/home/ubuntu/prography/.env SPRING_PROFILES_ACTIVE=$SPRING_PROFILES_ACTIVE GHCR_USERNAME=$GHCR_USERNAME GHCR_TOKEN=$GHCR_TOKEN HEALTHCHECK_URL=http://localhost:8080/api/fermata/health /home/ubuntu/prography/scripts/deploy.sh\"
             ]" \
             --query "Command.CommandId" --output text)
 
-          echo "COMMAND_ID=$COMMAND_ID" >> $GITHUB_ENV
+          echo "COMMAND_ID=$COMMAND_ID" >> "$GITHUB_ENV"
 
           echo "Waiting for deployment to complete (up to 10 minutes)..."
           for i in $(seq 1 60); do
@@ -91,7 +95,7 @@ jobs:
           done
 
       - name: Fetch SSM output
-        if: always()
+        if: always() && env.COMMAND_ID != ''
         env:
           EC2_INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID }}
           COMMAND_ID: ${{ env.COMMAND_ID }}
