@@ -58,13 +58,39 @@ jobs:
         run: |
           set -euo pipefail
 
+          DEPLOY_SCRIPT_B64="$(base64 -w 0 script/deploy.sh)"
+
+          jq -n \
+            --arg deploy_dir "/home/ubuntu/prography/script" \
+            --arg deploy_script_b64 "$DEPLOY_SCRIPT_B64" \
+            --arg image_name "$IMAGE_NAME" \
+            --arg image_tag "$IMAGE_TAG" \
+            --arg spring_profiles_active "$SPRING_PROFILES_ACTIVE" \
+            --arg ghcr_username "$GHCR_USERNAME" \
+            --arg ghcr_token "$GHCR_TOKEN" \
+            --arg healthcheck_url "http://localhost:8080/actuator/health" \
+            '{
+              commands: [
+                "mkdir -p \($deploy_dir)",
+                "printf %s " + ($deploy_script_b64 | @sh) + " | base64 -d > \($deploy_dir)/deploy.sh",
+                "chmod +x \($deploy_dir)/deploy.sh",
+                "IMAGE_NAME=" + ($image_name | @sh)
+                  + " IMAGE_TAG=" + ($image_tag | @sh)
+                  + " ENV_FILE=/home/ubuntu/prography/.env"
+                  + " CONTAINER_NAME=prography-backend"
+                  + " SPRING_PROFILES_ACTIVE=" + ($spring_profiles_active | @sh)
+                  + " GHCR_USERNAME=" + ($ghcr_username | @sh)
+                  + " GHCR_TOKEN=" + ($ghcr_token | @sh)
+                  + " HEALTHCHECK_URL=" + ($healthcheck_url | @sh)
+                  + " \($deploy_dir)/deploy.sh"
+              ]
+            }' > ssm-commands.json
+
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids "$EC2_INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
             --comment "Deploy Prography" \
-            --parameters commands="[
-              \"IMAGE_NAME=$IMAGE_NAME IMAGE_TAG=$IMAGE_TAG ENV_FILE=/home/ubuntu/prography/.env SPRING_PROFILES_ACTIVE=$SPRING_PROFILES_ACTIVE GHCR_USERNAME=$GHCR_USERNAME GHCR_TOKEN=$GHCR_TOKEN HEALTHCHECK_URL=http://localhost:8080/api/fermata/health /home/ubuntu/prography/scripts/deploy.sh\"
-            ]" \
+            --parameters file://ssm-commands.json \
             --query "Command.CommandId" --output text)
 
           echo "COMMAND_ID=$COMMAND_ID" >> "$GITHUB_ENV"
