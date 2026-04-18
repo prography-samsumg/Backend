@@ -5,7 +5,9 @@
 .omc
 .omx
 .claude
-build
+build/*
+!build/libs/
+!build/libs/*.jar
 out
 *.iml
 Dockerfile.healthcheck-verify
