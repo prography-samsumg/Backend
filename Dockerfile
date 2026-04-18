@@ -4,7 +4,6 @@ WORKDIR /app
 
 COPY gradlew gradlew.bat settings.gradle.kts build.gradle.kts ./
 COPY gradle ./gradle
-COPY buildSrc ./buildSrc
 RUN chmod +x ./gradlew
 
 COPY src ./src
