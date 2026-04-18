@@ -14,11 +14,9 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @TestConstructor(
-    autowireMode = TestConstructor.AutowireMode.ALL
+    autowireMode = TestConstructor.AutowireMode.ALL,
 )
-class BackendApplicationTests(
-    private val mockMvc: MockMvc
-) {
+class BackendApplicationTests(private val mockMvc: MockMvc) {
     @Test
     fun contextLoads() {
     }
