@@ -31,8 +31,6 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build application JAR
-        env:
-          SPRING_PROFILES_ACTIVE: prod
         run: ./gradlew --no-daemon bootJar -x test
 
       - name: Configure AWS credentials
