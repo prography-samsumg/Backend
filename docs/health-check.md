@@ -85,6 +85,17 @@ GET /actuator/health/readiness
 }
 ```
 
+## Docker 컨테이너 헬스체크
+
+`Dockerfile`은 컨테이너 내부에서 Actuator readiness 엔드포인트를 조회해 Docker health status를 노출합니다.
+
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD ["/bin/busybox", "wget", "-q", "-T", "5", "-O", "/dev/null", "http://127.0.0.1:8080/actuator/health/readiness"]
+```
+
+이 설정이 적용된 컨테이너는 readiness 응답이 `UP`일 때 `healthy`, 실패가 누적되면 `unhealthy` 상태로 표시됩니다.
+
 ## 로컬 확인 방법
 
 애플리케이션 실행 후 다음 명령으로 확인할 수 있습니다.
