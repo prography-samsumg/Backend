@@ -44,8 +44,8 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/prography-samsumg/Backend:latest
-            ghcr.io/prography-samsumg/Backend:${{ github.sha }}
+            ghcr.io/prography-samsumg/backend:latest
+            ghcr.io/prography-samsumg/backend:${{ github.sha }}
 
       - name: Deploy to EC2 via SSM
         env:
